@@ -1,1 +1,76 @@
-<!doctype html><html lang="ru"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Максимально своя игра</title><link rel="stylesheet" href="/style.css"><body><header><small>31 ОКТЯБРЯ • ВЕЧЕР СВОИХ</small><h1>🎃 Максимально своя игра</h1><p>Немного мистики. Много Максима.</p></header><nav><button id="r1">Раунд I</button><button id="r2">Раунд II</button><button id="undo">↶ Отменить</button><button id="add">＋ Участник</button><label>Таймер <input id="duration" type="number" min="5" max="300"> сек.</label><button id="full">⛶ Полный экран</button><button id="reset">Новая игра</button></nav><section id="players"></section><main id="board"></main><dialog id="card"><div id="question"></div><div class="controls"><strong id="clock"></strong><button id="pause">Пауза / продолжить</button><button id="answer">Показать ответ</button><button id="close">Завершить вопрос</button><button id="back">Вернуть на табло</button></div><div id="judges"></div></dialog><footer>👻 Призраки подсказывают только ведущему <span id="save"></span></footer><script type="module" src="/app.js"></script></body></html>
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#15101f">
+  <title>Максимально своя игра</title><link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header class="masthead">
+    <div class="eyebrow">31 ОКТЯБРЯ <span>✦</span> ВЕЧЕР СВОИХ</div>
+    <h1>🎃 Максимально своя игра</h1>
+    <p>Немного мистики. Много Максима.</p>
+  </header>
+  <nav class="toolbar" aria-label="Управление игрой">
+    <div class="rounds"><button id="r1">Раунд I</button><button id="r2">Раунд II</button></div>
+    <button id="undo" title="Отменить последнее действие (Ctrl+Z)">↶ Отменить</button>
+    <button id="add">＋ Участник</button>
+    <button id="results">🏆 Итоги</button>
+    <button id="settings">⚙ Настройки</button>
+    <button id="full" title="Полноэкранный режим (F)">⛶ На весь экран</button>
+  </nav>
+  <section id="players" aria-label="Участники и счёт"></section>
+  <div class="board-heading"><span id="round-name"></span><span id="progress"></span></div>
+  <main id="board" aria-label="Игровое табло"></main>
+  <section id="round-end" class="round-end" hidden></section>
+  <footer><span>👻 Призраки подсказывают только ведущему</span><span id="save" role="status">Загружаем игру…</span><span class="version">v1.1 · <kbd>Пробел</kbd> пауза · <kbd>Ctrl Z</kbd> отмена</span></footer>
+
+  <dialog id="card" aria-labelledby="question-text">
+    <div class="question-top"><span id="question-meta" class="eyebrow"></span><button id="back" class="subtle">↩ Вернуть на табло</button></div>
+    <div id="question"></div>
+    <section class="host-panel" aria-label="Пульт ведущего">
+      <div class="timer-row"><div class="time-display"><strong id="clock" role="timer"></strong><span id="timer-status"></span></div><div class="timer-track"><div id="timer-fill"></div></div></div>
+      <div class="controls">
+        <button id="pause" class="primary">⏸ Пауза</button>
+        <button id="timer-reset" title="Заново отсчитать заданное время">↻ Таймер</button>
+        <button id="answer">Показать ответ</button>
+        <button id="undo-card" title="Ctrl+Z">↶ Отменить</button>
+        <button id="close" class="finish">Завершить вопрос →</button>
+      </div>
+      <div id="judges"></div>
+      <p class="hint"><kbd>Пробел</kbd> пауза / продолжить · <kbd>A</kbd> показать ответ · <kbd>Ctrl Z</kbd> отмена</p>
+    </section>
+  </dialog>
+
+  <dialog id="player-dialog" class="small-dialog" aria-labelledby="player-title">
+    <form id="player-form">
+      <h2 id="player-title">Новый участник</h2><p class="muted">Выбери своего ночного персонажа</p>
+      <fieldset id="avatars"><legend>Аватар</legend></fieldset>
+      <label class="field">Имя или название команды<input id="player-name" required maxlength="60" autocomplete="off" placeholder="Например, Охотники за тортом"></label>
+      <label class="field" id="score-field">Счёт<input id="player-score" type="number" min="-1000000" max="1000000" step="1" required value="0"></label>
+      <div class="dialog-actions"><button type="button" data-dismiss="player-dialog">Отмена</button><button class="primary" type="submit">Сохранить</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="settings-dialog" class="small-dialog" aria-labelledby="settings-title">
+    <h2 id="settings-title">Настройки вечера</h2>
+    <label class="field">Время на вопрос, секунд<input id="duration" type="number" min="5" max="300" step="1"></label>
+    <p class="muted">От 5 до 300 секунд. Новое значение применяется к следующим вопросам.</p>
+    <label class="check"><input id="sound" type="checkbox"> Мягкий сигнал, когда время вышло</label>
+    <hr><h3>Сохранение игры</h3><p class="muted">Счёт сохраняется автоматически. Копию можно перенести на другой компьютер.</p>
+    <div class="controls"><button id="export">↓ Скачать копию</button><button id="import">↑ Загрузить копию</button></div>
+    <input id="import-file" type="file" accept=".json,application/json" hidden>
+    <hr><button id="reset" class="danger">Начать новую игру</button>
+    <div class="dialog-actions"><button data-dismiss="settings-dialog" class="primary">Готово</button></div>
+  </dialog>
+
+  <dialog id="results-dialog" class="small-dialog" aria-labelledby="results-title">
+    <div class="trophy">🏆</div><h2 id="results-title">Максимально классные игроки</h2><div id="standings"></div>
+    <div class="dialog-actions"><button data-dismiss="results-dialog" class="primary">Вернуться в игру</button></div>
+  </dialog>
+
+  <dialog id="photo-dialog" aria-label="Увеличенное фото"><button id="photo-close" aria-label="Закрыть фото">✕ Закрыть</button><img id="photo-large" alt="Увеличенное изображение из вопроса"></dialog>
+  <div id="toast" role="status" hidden></div>
+  <script type="module" src="/app.js"></script>
+</body>
+</html>
